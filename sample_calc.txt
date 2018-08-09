@@ -1,0 +1,56 @@
+Fetching recording GN76TTBD7FV0HVZ...
+ID=GN76TTBD7FV0HVZ
+Title=What Are You Doing The Rest Of Your Life
+Artist=Laura Fygi
+GOETs (15):
+  1. Type=GENRE, ID=3109, Weight=75, Name=Jazz Vocal: Female
+  2. Type=GENRE, ID=18981, Weight=25, Name=Chanson Jazz
+  3. Type=ORIGIN, ID=4276, Weight=100, Name=Netherlands
+  4. Type=ERA, ID=23743, Weight=100, Name=1997
+  5. Type=ATYPE, ID=2656, Weight=100, Name=Female Solo - Solo Vocal
+  6. Type=MOOD, ID=34185, Weight=21, Name=Creepy / Eerie / Ominous
+  7. Type=MOOD, ID=34214, Weight=9, Name=Dark Dramatic / Emotional / Thrilling
+  8. Type=MOOD, ID=34187, Weight=8, Name=Wistful / Melancholy / Forlorn
+  9. Type=MOOD, ID=34184, Weight=8, Name=Enigmatic / Brooding / Mysterious
+  10. Type=MOOD, ID=34163, Weight=7, Name=Sophisticated / Lush / Romantic
+  11. Type=MOOD, ID=34173, Weight=7, Name=Lyrical Romantic Dramatic Emotion
+  12. Type=MOOD, ID=34186, Weight=7, Name=Somber / Solem / Spiritual
+  13. Type=MOOD, ID=34164, Weight=6, Name=Sentimental
+  14. Type=MOOD, ID=34189, Weight=6, Name=Tender Sad / Soulful
+  15. Type=MOOD, ID=34216, Weight=4, Name=Serious/ Cerebral / Questioning
+  
+Fetching recording GN4DD6FXY6QA7YN...
+ID=GN4DD6FXY6QA7YN
+Title=Gloomy Sunday
+Artist=Sinéad O'Connor
+GOETs (18):
+  1. Type=GENRE, ID=3109, Weight=75, Name=Jazz Vocal: Female
+  2. Type=GENRE, ID=18833, Weight=25, Name=Soft Jazz Vocals
+  3. Type=ORIGIN, ID=4271, Weight=100, Name=Ireland
+  4. Type=ERA, ID=23748, Weight=100, Name=1992
+  5. Type=ATYPE, ID=2656, Weight=100, Name=Female Solo - Solo Vocal
+  6. Type=MOOD, ID=34187, Weight=28, Name=Wistful / Melancholy / Forlorn
+  7. Type=MOOD, ID=34189, Weight=14, Name=Tender Sad / Soulful
+  8. Type=MOOD, ID=34158, Weight=10, Name=Enchanted / Mysterious / Dreamy
+  9. Type=MOOD, ID=34173, Weight=9, Name=Lyrical Romantic Dramatic Emotion
+  10. Type=MOOD, ID=34186, Weight=9, Name=Somber / Solem / Spiritual
+  11. Type=MOOD, ID=34164, Weight=6, Name=Sentimental
+  12. Type=MOOD, ID=34163, Weight=6, Name=Sophisticated / Lush / Romantic
+  13. Type=MOOD, ID=34185, Weight=5, Name=Creepy / Eerie / Ominous
+  14. Type=MOOD, ID=34184, Weight=5, Name=Enigmatic / Brooding / Mysterious
+  15. Type=MOOD, ID=34154, Weight=2, Name=Peaceful / Healing / Reverent
+  16. Type=TEMPO_MAIN, ID=34094, Weight=100, Name=60's
+  17. Type=TEMPO_MAIN, ID=34085, Weight=0, Name=30's
+  18. Type=TEMPO_MAIN, ID=34108, Weight=0, Name=120's
+  
+RESULT:
+  Step1 = PASS
+  Step2:
+    * Genre = 925
+    * Origin = 550
+    * Era = 850
+    * Artist Type = 975
+    * Mood = 617
+    * Weighted = 757
+  ====================
+  SIMILARITY = 757
