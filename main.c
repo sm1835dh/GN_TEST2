@@ -15,6 +15,7 @@
 #define CONTACT_EMAIL		"Barna Mink <bmink@gracenote.com>"
 //#define DEFAULT_CONFIGFILE	"/Users/1100169/prog/gracenote/MDS/GMD/GMD/mdsbrowser.config"
 #define DEFAULT_CONFIGFILE    "/Users/1100169/prog/gracenote/MDS/GMD/GMD/ori_mdsbrowser.config"
+//#define DEFAULT_CONFIGFILE    "./mdsbrowser.config"
 
 
 static int simthreshold = 600;
@@ -439,49 +440,253 @@ print_hierarchy_node_full(gt_hier_node_t *node)
 #include <stdlib.h>
 #include <time.h>
 
-int main(int argc, char **argv)
-{
+void exec_simtrack(char *input, char *output){
     FILE *inF = NULL;
     FILE *outF = NULL;
-//    int        arg;
-    char        configfile[MAXFILELEN];
-    int        ret;
-//    char        input[MAXINPUTLEN];
-    char        input_file_path[MAXINPUTLEN]= {0};
-    char        output_file_path[MAXINPUTLEN]= {0};
-    char         gmd_id[GMD_GLOBAL_ID_SIZE] = {0};
-//    char        *ch;
-//    char        *ch2;
-//    char        *searchstr;
-//    gt_artist_t    *artist;
-//    gt_artist_t    *arts;
-//    gt_goet_t    *goets;
-    int        id;
-//    int        id2;
+    
+    char        gmd_id[GMD_GLOBAL_ID_SIZE] = {0};
+    int         ret;
+    int         id;
     unsigned int uid;
-//    unsigned int uid2;
-//    int        weight;
-    int        rescnt;
-    int        i;
-//    gt_goet_t    *goet;
-//    gt_goet_t    *goet2;
-//    int        val;
-//    gt_search_goet_t searchgoets[MAXSEARCHGOET];
-//    int        searchgoetcnt;
-//    gt_similarity_t    sim;
     gt_track_t    *track;
     gt_track_t    *trks;
-//    gt_hier_t    *hier;
-//    int        maxlevel;
-//    gt_hier_node_t    *node;
-//    gt_lang_t    *lang;
+    int        rescnt;
+    int        i;
+    char        input_file_path[MAXINPUTLEN]= {0};
+    char        output_file_path[MAXINPUTLEN]= {0};
     
     //time check
     clock_t startTime, endTime;
     double nProcessExcuteTime;
     
+    char strTemp[255];
+    char *pStr;
+    
+    strncpy(input_file_path, input, strlen(input));
+    strncpy(output_file_path, output, strlen(output));
+    
+    printf("%s\n",input_file_path);
+    printf("%s\n",output_file_path);
+    
+    inF = fopen(input_file_path, "r" );
+    outF = fopen(output_file_path, "w");
+
+    while( !feof( inF ) )
+    {
+        startTime = clock(); //현재 시각을 구한다.
+        pStr = fgets( strTemp, sizeof(strTemp), inF );
+        
+        if (!pStr) {
+            printf("End of file\n");
+            break;
+        }
+        remove_newline(strTemp);
+        
+        if (data_format == GT_DATA_FORMAT_GMD) {
+            strncpy(gmd_id, pStr, GMD_GLOBAL_ID_SIZE-1);
+            
+            gt_log(gmd_id);
+            ret = gt_get_numerical_id_from_gmd(gmd_id, &uid);
+            if (ret != 0)
+                id = 0;
+            else
+                id = (int) uid;
+        }
+        else
+            id = atoi(pStr);
+        if(id > 0) {
+            ret = gt_lookup_track(id, &track);
+            if(ret == ENOENT) {
+                printf("Not found.\n");
+            } else if(ret != 0) {
+                printf("Error.\n");
+            } else {
+                printf("Searching for recordings similar to %s...\n",track->gt_name);
+            }
+            
+            trks = NULL;
+            ret = gt_search_track_by_similarity(0, id, simthreshold, popthreshold, 0, &trks, &rescnt);
+            if(ret == ENOENT) {
+                printf("Not found.\n");
+            } else if(ret != 0) {
+                printf("Error.\n");
+            } else {
+                for(i = 0; i < rescnt; ++i) {
+                    if (data_format == GT_DATA_FORMAT_GMD) {
+                        ret = gt_get_gmd_id_from_numerical(trks[i].gt_id, gmd_id);
+                        if (ret != 0)
+                            continue;
+                        fprintf(outF,"%s,%s,%4d,%s\n",strTemp,gmd_id,trks[i].gt_match_score,trks[i].gt_name);
+                    }
+                    else {
+                        fprintf(outF,"%s,%10d,%4d,%s\n",strTemp,trks[i].gt_id,trks[i].gt_match_score,trks[i].gt_name);
+                    }
+                    if(maxres && i > maxres)
+                        break;
+                }
+            }
+            if(trks) {
+                gt_free_track_reslist(trks);
+                trks = NULL;
+            }
+        }
+        
+        endTime = clock(); //현재 시각을 구한다.
+        nProcessExcuteTime = ( (double)(endTime - startTime) ) / CLOCKS_PER_SEC;
+        printf("Excute time: %f\n", nProcessExcuteTime);
+        if(ret != 0) {
+            fprintf(stderr, "Could not load tables! %s\n", strTemp);
+            //exit(-1);
+        }
+    }
+    
+    fclose( inF ); inF = NULL;
+    fclose( outF ); outF = NULL;
+}
+
+void exec_simartist(char *input, char *output){
+    FILE *inF = NULL;
+    FILE *outF = NULL;
+    
+    char         gmd_id[GMD_GLOBAL_ID_SIZE] = {0};
+    int        ret;
+    int        id;
+    unsigned int uid;
+    gt_artist_t    *artist;
+    gt_artist_t    *arts;
+    int        rescnt;
+    int        i;
+    char        input_file_path[MAXINPUTLEN]= {0};
+    char        output_file_path[MAXINPUTLEN]= {0};
+    
+    //time check
+    clock_t startTime, endTime;
+    double nProcessExcuteTime;
+    
+    char strTemp[255];
+    char *pStr;
+    
+    strncpy(input_file_path, input, strlen(input));
+    strncpy(output_file_path, output, strlen(output));
+    
+    printf("%s\n",input_file_path);
+    printf("%s\n",output_file_path);
+    
+    inF = fopen(input_file_path, "r" );
+    outF = fopen(output_file_path, "w");
+    
+    while( !feof( inF ) )
+    {
+        startTime = clock(); //현재 시각을 구한다.
+        pStr = fgets( strTemp, sizeof(strTemp), inF );
+        if (!pStr) {
+            printf("End of file\n");
+            break;
+        }
+        remove_newline(strTemp);
+        
+        if (data_format == GT_DATA_FORMAT_GMD) {
+            strncpy(gmd_id, pStr, GMD_GLOBAL_ID_SIZE-1);
+            
+            gt_log(gmd_id);
+            ret = gt_get_numerical_id_from_gmd(gmd_id, &uid);
+            if (ret != 0)
+                id = 0;
+            else
+                id = (int) uid;
+        }
+        else
+            id = atoi(pStr);
+        if(id > 0) {
+            ret = gt_lookup_artist(id, &artist);
+            if(ret == ENOENT) {
+                printf("Not found.\n");
+            } else if(ret != 0) {
+                printf("Error.\n");
+            } else {
+                printf("Searching for artists similar to %s...\n", artist->ga_name);
+            }
+            
+            arts = NULL;
+            ret = gt_search_artist_by_similarity(id, simthreshold, popthreshold, 0, &arts, &rescnt);
+            
+            if(ret == ENOENT) {
+                printf("Not found.\n");
+            } else if(ret != 0) {
+                printf("Error.\n");
+            } else {
+                for(i = 0; i < rescnt; ++i) {
+                    if (data_format == GT_DATA_FORMAT_GMD) {
+                        ret = gt_get_gmd_id_from_numerical(arts[i].ga_id, gmd_id);
+                        if (ret != 0)
+                            continue;
+                        fprintf(outF,"%s,%s,%4d\n",strTemp,gmd_id,arts[i].ga_match_score);
+                    }
+                    else {
+                        fprintf(outF,"%s,%10d,%4d\n",strTemp,arts[i].ga_id,arts[i].ga_match_score);
+                    }
+                    if(maxres && i > maxres)
+                        break;
+                }
+            }
+            if(arts) {
+                gt_free_artist_reslist(arts);
+                arts = NULL;
+            }
+        }
+        
+        endTime = clock(); //현재 시각을 구한다.
+        nProcessExcuteTime = ( (double)(endTime - startTime) ) / CLOCKS_PER_SEC;
+        printf("Excute time: %f\n", nProcessExcuteTime);
+        if(ret != 0) {
+            fprintf(stderr, "Could not load tables! %s\n", strTemp);
+            //exit(-1);
+        }
+    }
+    
+    fclose( inF ); inF = NULL;
+    fclose( outF ); outF = NULL;
+}
+
+
+
+int main(int argc, char **argv)
+{
+    int        arg;
+    char        configfile[MAXFILELEN];
+    int        ret;
+    int         nMode = 0;
+    
     memset(configfile, 0, MAXFILELEN);
   
+    while((arg = getopt(argc, argv, "taA")) != -1) {
+        switch(arg) {
+            case 't':
+                nMode = 1;
+                break;
+            case 'a':
+                nMode = 2;
+                break;
+            case 'A':
+                nMode = 3;
+                break;
+        }
+    }
+    
+    if ( nMode == 1 && argc == 4) {
+        printf ("Track similarity.\n");
+    } else if ( nMode == 2 && argc == 4) {
+        printf ("Artist similarity.\n");
+    } else if ( nMode == 3 && argc == 6) {
+        printf ("Track&Artist similarity.\n");
+    } else {
+        printf("Error: Invalid input\n");
+        printf("   mdsbrowser -t <input file path> <output file path>\n");
+        printf("   mdsbrowser -a <input file path> <output file path>\n");
+        printf("   mdsbrowser -A <input track file path> <output track file path> <input artist file path> <output artist file path>\n");
+        exit(-1);
+    }
+    
     if(!strlen(configfile))
         snprintf(configfile, MAXFILELEN - 1, "%s", DEFAULT_CONFIGFILE);
     
@@ -493,126 +698,27 @@ int main(int argc, char **argv)
     
     (void) gt_set_logger(logger);
     
-    startTime = clock(); //현재 시각을 구한다.
-
     ret = load_config(configfile);
-
-    endTime = clock(); //현재 시각을 구한다.
-    nProcessExcuteTime = ( (double)(endTime - startTime) ) / CLOCKS_PER_SEC;
-    printf("load_config - Excute time: %f\n", nProcessExcuteTime);
-    
     if(ret != 0) {
         fprintf(stderr, "Could not load configuration file.\n");
         gt_uninit();
         exit(-1);
     }
 
-    startTime = clock(); //현재 시각을 구한다.
-
     ret = gt_load_tables(do_load_recordings, do_load_hierarchies, data_format, do_one_recording_per_song);
-
-    endTime = clock(); //현재 시각을 구한다.
-    nProcessExcuteTime = ( (double)(endTime - startTime) ) / CLOCKS_PER_SEC;
-    printf("gt_load_tables - Excute time: %f\n", nProcessExcuteTime);
     if(ret != 0) {
         fprintf(stderr, "Could not load tables!\n");
         exit(-1);
     }
-
-    if (argc == 3){
-        strncpy(input_file_path, argv[1], strlen(argv[1]));
-        strncpy(output_file_path, argv[2], strlen(argv[2]));
-        
-        printf("%s\n",input_file_path);
-        printf("%s\n",output_file_path);
-    }else {
-        printf("Error: Invalid input\n");
-        printf("   mdsbrowser <input file path> <output file path>\n");
-        exit(-1);
+    
+    if (nMode == 1) {
+        exec_simtrack(argv[2], argv[3]);
+    } else if (nMode == 2){
+        exec_simartist(argv[2], argv[3]);
+    } else if (nMode == 3){
+        exec_simtrack(argv[2], argv[3]);
+        exec_simartist(argv[4], argv[5]);
     }
-
-    inF = fopen(input_file_path, "r" );
-    outF = fopen(output_file_path, "w");
-    if( inF != NULL )
-    {
-        char strTemp[255];
-        char *pStr;
-        
-        while( !feof( inF ) )
-        {
-            startTime = clock(); /*현재 시각을 구한다.*/
-            pStr = fgets( strTemp, sizeof(strTemp), inF );
-            remove_newline(strTemp);
-            
-            if (data_format == GT_DATA_FORMAT_GMD) {
-                strncpy(gmd_id, pStr, GMD_GLOBAL_ID_SIZE-1);
-                
-                gt_log(gmd_id);
-                ret = gt_get_numerical_id_from_gmd(gmd_id, &uid);
-                if (ret != 0)
-                    id = 0;
-                else
-                    id = (int) uid;
-            }
-            else
-                id = atoi(pStr);
-            if(id > 0) {
-                ret = gt_lookup_track(id, &track);
-                if(ret == ENOENT) {
-                    printf("Not found.\n");
-                } else if(ret != 0) {
-                    printf("Error.\n");
-                } else {
-                    printf("Searching for recordings"
-                           " similar to %s...\n",track->gt_name);
-                }
-                
-                trks = NULL;
-                ret = gt_search_track_by_similarity(0, id, simthreshold, popthreshold, 0, &trks, &rescnt);
-                if(ret == ENOENT) {
-                    printf("Not found.\n");
-                } else if(ret != 0) {
-                    printf("Error.\n");
-                } else {
-                    for(i = 0; i < rescnt; ++i) {
-                        if (data_format == GT_DATA_FORMAT_GMD) {
-                            ret = gt_get_gmd_id_from_numerical(trks[i].gt_id, gmd_id);
-                            if (ret != 0)
-                                continue;
-                            //printf("%s %4d %s\n",gmd_id,trks[i].gt_match_score,trks[i].gt_name);
-                            fprintf(outF,"%s,%s,%4d,%s\n",strTemp,gmd_id,trks[i].gt_match_score,trks[i].gt_name);
-                        }
-                        else {
-                            //printf("%10d %4d %s\n",trks[i].gt_id,trks[i].gt_match_score,trks[i].gt_name);
-                            fprintf(outF,"%s,%10d,%4d,%s\n",strTemp,trks[i].gt_id,trks[i].gt_match_score,trks[i].gt_name);
-                        }
-                        if(maxres && i > maxres)
-                            break;
-                    }
-                }
-                if(trks) {
-                    gt_free_track_reslist(trks);
-                    trks = NULL;
-                }
-            }
-
-            endTime = clock(); /*현재 시각을 구한다.*/
-            nProcessExcuteTime = ( (double)(endTime - startTime) ) / CLOCKS_PER_SEC;
-            printf("Excute time: %f\n", nProcessExcuteTime);
-            if(ret != 0) {
-                fprintf(stderr, "Could not load tables!\n");
-                exit(-1);
-            }
-        }
-    }
-    else
-    {
-        //에러 처리
-        printf("");
-    }
-    fclose( inF ); inF = NULL;
-    fclose( outF ); outF = NULL;
-    //fgets(input, MAXINPUTLEN, stdin);
 }
 
 
